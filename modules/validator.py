@@ -36,6 +36,20 @@ def check_string(var: str, var_name: str, options: list=[], min_length: int=0) -
     if len(options) > 0 and var not in options: raise ValueError(f'Invalid input for {var_name}. Expecting a value from {options}, not {var}!')
     return True
 
+def check_required_string(var: str, var_name: str, hint: str = "") -> bool | TypeError | ValueError:
+    if not isinstance(var, str):
+        raise TypeError(
+            f'The variable "{var_name}" in "{__validation_file_path}" must be a String!\n'
+            f'Received "{var}" of type "{type(var)}" instead!\n'
+        )
+    if not var.strip():
+        hint_msg = f"\nHint: {hint}\n" if hint else "\n"
+        raise ValueError(
+            f'The variable "{var_name}" in "{__validation_file_path}" is required and cannot be empty!{hint_msg}'
+            f'Solution:\nPlease open "{__validation_file_path}" and fill "{var_name}".\n'
+        )
+    return True
+
 def check_list(var: list, var_name: str, options: list=[], min_length: int=0) -> bool | TypeError | ValueError:
     if not isinstance(var, list): 
         raise TypeError(f'Invalid input for {var_name}. Expecting a List!')
@@ -55,18 +69,19 @@ def validate_personals() -> None | ValueError | TypeError:
     global __validation_file_path
     __validation_file_path = "config/personals.py"
 
-    check_string(first_name, "first_name", min_length=1)
+    check_required_string(first_name, "first_name")
     check_string(middle_name, "middle_name")
-    check_string(last_name, "last_name", min_length=1)
+    check_required_string(last_name, "last_name")
 
-    check_string(phone_number, "phone_number", min_length=10)
+    check_required_string(phone_number, "phone_number", hint="Use digits only; include country code only if your LinkedIn form expects it.")
+    check_required_string(email, "email", hint="Many Easy Apply forms require an email.")
 
     check_string(current_city, "current_city")
     
     check_string(street, "street")
     check_string(state, "state")
     check_string(zipcode, "zipcode")
-    check_string(country, "country")
+    check_required_string(country, "country", hint='Example: "India", "United States"')
     
     check_string(ethnicity, "ethnicity", ["Decline", "Hispanic/Latino", "American Indian or Alaska Native", "Asian", "Black or African American", "Native Hawaiian or Other Pacific Islander", "White", "Other"],  min_length=0)
     check_string(gender, "gender", ["Male", "Female", "Other", "Decline", ""])
@@ -83,12 +98,13 @@ def validate_questions() -> None | ValueError | TypeError:
     global __validation_file_path
     __validation_file_path = "config/questions.py"
 
-    check_string(default_resume_path, "default_resume_path")
-    check_string(years_of_experience, "years_of_experience")
+    check_required_string(default_resume_path, "default_resume_path", hint='Example: "all resumes/default/resume.pdf"')
+    check_required_string(years_of_experience, "years_of_experience", hint='Example: "0", "1", "5"')
     check_string(require_visa, "require_visa", ["Yes", "No"])
     check_string(website, "website")
     check_string(linkedIn, "linkedIn")
     check_int(desired_salary, "desired_salary")
+    check_required_string(us_citizenship, "us_citizenship")
     check_string(us_citizenship, "us_citizenship", ["U.S. Citizen/Permanent Resident", "Non-citizen allowed to work for any employer", "Non-citizen allowed to work for current employer", "Non-citizen seeking work authorization", "Canadian Citizen/Permanent Resident", "Other"])
     check_string(linkedin_headline, "linkedin_headline")
     check_int(notice_period, "notice_period")
@@ -169,11 +185,11 @@ def validate_secrets() -> None | ValueError | TypeError:
     
     ##> ------ Yang Li : MARKYangL - Feature ------
     # Validate DeepSeek configuration
-    check_string(ai_provider, "ai_provider", ["openai", "deepseek"])
+    check_string(ai_provider, "ai_provider", ["openai", "deepseek", "gemini"])
 
     ##> ------ Tim L : tulxoro - Refactor ------
     if ai_provider == "deepseek":
-        check_string(llm_model, "deepseek_model", ["deepseek-chat", "deepseek-reasoner"])
+        check_string(llm_model, "llm_model", ["deepseek-chat", "deepseek-reasoner"])
     else:
         check_string(llm_model, "llm_model")
     ##<

@@ -318,12 +318,15 @@ def get_job_main_details(job: WebElement, blacklisted_companies: set, rejected_j
             print_lg(f'Already applied to "{title} | {company}" job. Job ID: {job_id}!')
     except: pass
     try: 
-        if not skip: job_details_button.click()
+        if not skip:
+            clicked = safe_click(driver, job_details_button, timeout=3.0, scroll=True)
+            if not clicked:
+                print_lg(f'Failed to click "{title} | {company}" job details quickly. Job ID: {job_id}! Skipping this job to avoid hanging.')
+                skip = True
     except Exception as e:
         print_lg(f'Failed to click "{title} | {company}" job on details button. Job ID: {job_id}!') 
         # print_lg(e)
-        discard_job()
-        job_details_button.click() # To pass the error outside
+        skip = True
     buffer(click_gap)
     return (job_id,title,company,work_location,work_style,skip)
 
@@ -467,8 +470,10 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
             prev_answer = selected_option
             if overwrite_previous_answers or selected_option == "Select an option":
                 ##> ------ WINDY_WINDWARD Email:karthik.sarode23@gmail.com - Added fuzzy logic to answer location based questions ------
-                if 'email' in label or 'phone' in label: 
-                    answer = prev_answer
+                if 'email' in label:
+                    answer = prev_answer if prev_answer else email
+                elif 'phone' in label:
+                    answer = prev_answer if prev_answer else phone_number
                 elif 'gender' in label or 'sex' in label: 
                     answer = gender
                 elif 'disability' in label: 
@@ -597,6 +602,7 @@ def answer_questions(modal: WebElement, questions_list: set, work_location: str,
             if not prev_answer or overwrite_previous_answers:
                 if 'experience' in label or 'years' in label: answer = years_of_experience
                 elif 'phone' in label or 'mobile' in label: answer = phone_number
+                elif 'email' in label: answer = email
                 elif 'street' in label: answer = street
                 elif 'city' in label or 'location' in label or 'address' in label:
                     answer = current_city if current_city else work_location

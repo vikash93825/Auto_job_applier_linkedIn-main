@@ -25,6 +25,33 @@ from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.common.action_chains import ActionChains
 
 # Click Functions
+def safe_click(
+    driver: WebDriver,
+    element: WebElement,
+    timeout: float = 3.0,
+    scroll: bool = True,
+    scrollTop: bool = False,
+) -> bool:
+    """
+    Best-effort click helper that avoids indefinite hangs by:
+    - waiting briefly for interactability
+    - scrolling into view
+    - falling back to JavaScript click when Selenium click is intercepted
+    Returns True when a click attempt was made successfully, else False.
+    """
+    try:
+        WebDriverWait(driver, timeout).until(lambda _d: element.is_displayed() and element.is_enabled())
+        if scroll:
+            scroll_to_view(driver, element, scrollTop)
+        try:
+            element.click()
+        except Exception:
+            driver.execute_script("arguments[0].click();", element)
+        buffer(click_gap)
+        return True
+    except Exception:
+        return False
+
 def wait_span_click(driver: WebDriver, text: str, time: float=5.0, click: bool=True, scroll: bool=True, scrollTop: bool=False) -> WebElement | bool:
     '''
     Finds the span element with the given `text`.
